@@ -78,6 +78,7 @@ export const InvoiceResults: React.FC<InvoiceResultsProps> = ({ data }) => {
               Fornecedor
             </CardTitle>
           </CardHeader>
+          <p>Id existente: {data.fornecedorId ?? "Ainda não existe"}</p>
           <CardContent className="space-y-3">
             <div>
               <label className="text-sm font-medium text-muted-foreground">
@@ -112,6 +113,8 @@ export const InvoiceResults: React.FC<InvoiceResultsProps> = ({ data }) => {
               Faturado
             </CardTitle>
           </CardHeader>
+          <p>Id existente: {data.faturadoId ?? "Ainda não existe"}</p>
+
           <CardContent className="space-y-3">
             <div>
               <label className="text-sm font-medium text-muted-foreground">
