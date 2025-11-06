@@ -1,7 +1,52 @@
 import { InvoiceData } from "@/types/invoice";
+import { processInvoiceWithGeminiAgent } from "./agente2";
+import api from "./api";
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const GEMINI_API_URL = import.meta.env.VITE_GEMINI_API_URL;
+
+interface Call {
+  endpoint: string;
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  data?: undefined;
+  description?: string;
+}
+
+export const executeCalls = async (calls: Call[]) => {
+  for (const call of calls) {
+    try {
+      console.log(
+        `🔹 Executando: ${call.description} (${call.method} ${call.endpoint})`
+      );
+
+      let response;
+      switch (call.method) {
+        case "GET":
+          response = await api.get(call.endpoint);
+          break;
+        case "POST":
+          response = await api.post(call.endpoint, call.data);
+          break;
+        case "PUT":
+          response = await api.put(call.endpoint, call.data);
+          break;
+        case "DELETE":
+          response = await api.delete(call.endpoint);
+          break;
+        default:
+          console.warn(`Método não suportado: ${call.method}`);
+          continue;
+      }
+
+      console.log("✅ Sucesso:", response.data);
+    } catch (error) {
+      console.error(
+        `❌ Erro em ${call.endpoint}:`,
+        error.response?.data || error.message
+      );
+    }
+  }
+};
 
 const EXPENSE_CATEGORIES = {
   INSUMOS_AGRICOLAS: [
@@ -158,7 +203,16 @@ Analise a nota fiscal e retorne o JSON:
       throw new Error("Dados essenciais da nota fiscal não encontrados");
     }
 
-    return invoiceData;
+    const res = await processInvoiceWithGeminiAgent(invoiceData);
+    await executeCalls(res.calls);
+    // Mapear IDs retornados pelo plano para os campos esperados em InvoiceData
+    const ids = res.ids || {};
+    return {
+      ...invoiceData,
+      fornecedorId: ids.fornecedorId ?? invoiceData.fornecedorId,
+      faturadoId: ids.faturadoId ?? invoiceData.faturadoId,
+      idClassificacao: ids.classificacaoId ?? invoiceData.idClassificacao,
+    };
   } catch (error) {
     console.error("Erro ao analisar PDF:", error);
     throw new Error(

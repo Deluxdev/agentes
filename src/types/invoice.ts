@@ -49,4 +49,8 @@ export interface InvoiceData {
   parcelas: Installment[];
   valorTotal: number;
   classificacaoDespesa: ExpenseClassification;
+  fornecedorId: number;
+  faturadoId: number;
+  idClassificacao: number;
+  idMovimento: number;
 }

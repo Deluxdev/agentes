@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { InvoiceData } from "@/types/invoice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import {
   DollarSign,
   Tag,
 } from "lucide-react";
+import { getClassificacoes } from "@/services/financeiroService";
 
 interface InvoiceResultsProps {
   data: InvoiceData;
@@ -31,6 +32,29 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export const InvoiceResults: React.FC<InvoiceResultsProps> = ({ data }) => {
+  const [moCount, setMoCount] = useState<number | null>(null);
+  const fornecedorExists = data.fornecedorId !== undefined && data.fornecedorId !== null;
+  const faturadoExists = data.faturadoId !== undefined && data.faturadoId !== null;
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetchCounts() {
+      try {
+        const classificacoes = await getClassificacoes();
+        const countMO = Array.isArray(classificacoes)
+          ? classificacoes.filter((c: any) => c?.tipo === "MANUTENCAO_E_OPERACAO").length
+          : 0;
+        if (mounted) setMoCount(countMO);
+      } catch (e) {
+        if (mounted) setMoCount(null);
+      }
+    }
+    fetchCounts();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -79,6 +103,11 @@ export const InvoiceResults: React.FC<InvoiceResultsProps> = ({ data }) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Badge className={fornecedorExists ? "bg-green-600 text-white" : "bg-red-600 text-white"}>
+                {fornecedorExists ? `Existe (ID ${data.fornecedorId})` : "Não existe"}
+              </Badge>
+            </div>
             <div>
               <label className="text-sm font-medium text-muted-foreground">
                 Razão Social
@@ -113,6 +142,11 @@ export const InvoiceResults: React.FC<InvoiceResultsProps> = ({ data }) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Badge className={faturadoExists ? "bg-green-600 text-white" : "bg-red-600 text-white"}>
+                {faturadoExists ? `Existe (ID ${data.faturadoId})` : "Não existe"}
+              </Badge>
+            </div>
             <div>
               <label className="text-sm font-medium text-muted-foreground">
                 Nome Completo
@@ -244,12 +278,23 @@ export const InvoiceResults: React.FC<InvoiceResultsProps> = ({ data }) => {
               <Badge variant="secondary" className="text-lg px-3 py-1">
                 {CATEGORY_LABELS[data.classificacaoDespesa.categoria]}
               </Badge>
+              {(data as any).idClassificacao != null ? (
+                <Badge className="bg-green-600 text-white">Despesa existe (ID {(data as any).idClassificacao})</Badge>
+              ) : (
+                <Badge className="bg-red-600 text-white">Despesa não existe</Badge>
+              )}
               {data.classificacaoDespesa.subcategoria && (
                 <Badge variant="outline">
                   {data.classificacaoDespesa.subcategoria}
                 </Badge>
               )}
             </div>
+            {data.classificacaoDespesa.categoria === "MANUTENCAO_E_OPERACAO" && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Contagem no banco</label>
+                <p className="text-foreground mt-1">Total de classificações em "Manutenção e Operação": {moCount ?? "—"}</p>
+              </div>
+            )}
             <div>
               <label className="text-sm font-medium text-muted-foreground">
                 Justificativa
