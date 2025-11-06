@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://express-tarefa.onrender.com/api/financeiro",
+  baseURL: import.meta.env.VITE_API_URL + "/financeiro",
   headers: {
     "Content-Type": "application/json",
   },

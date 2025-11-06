@@ -233,7 +233,6 @@ export async function processInvoiceWithGeminiAgent(
       
       Return ONLY valid JSON. No explanations.
     `,
-    tools,
   });
 
   const pessoas = await getPessoas();

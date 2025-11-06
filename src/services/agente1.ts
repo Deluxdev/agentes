@@ -205,7 +205,14 @@ Analise a nota fiscal e retorne o JSON:
 
     const res = await processInvoiceWithGeminiAgent(invoiceData);
     await executeCalls(res.calls);
-    return { ...invoiceData, ...res.ids };
+    // Mapear IDs retornados pelo plano para os campos esperados em InvoiceData
+    const ids = res.ids || {};
+    return {
+      ...invoiceData,
+      fornecedorId: ids.fornecedorId ?? invoiceData.fornecedorId,
+      faturadoId: ids.faturadoId ?? invoiceData.faturadoId,
+      idClassificacao: ids.classificacaoId ?? invoiceData.idClassificacao,
+    };
   } catch (error) {
     console.error("Erro ao analisar PDF:", error);
     throw new Error(
